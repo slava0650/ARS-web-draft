@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN - {{ event.title }}{% endblock %}
+
+{% block content %}
+<section class="section page-hero event-hero-section">
+    <div class="container event-hero-panel">
+        <div class="event-hero-main">
+            <a class="back-link" href="{% url 'events' %}">
+                <span aria-hidden="true">&larr;</span>
+                Все события
+            </a>
+            <div class="event-hero-kicker">
+                <span class="badge">{{ event.event_type }}</span>
+                <span>Операция ARMA-RUSSIAN</span>
+            </div>
+            <h1>{{ event.title }}</h1>
+            <p class="lead">{{ event.short_description }}</p>
+        </div>
+        <div class="event-hero-aside">
+            <div class="event-hero-date" data-event-time="{{ event.starts_at_unix|default:'' }}">
+                <span>Дата операции</span>
+                <strong data-event-date>{{ event.date_label }}</strong>
+                <em data-event-clock>{{ event.time_label }}</em>
+                <small data-event-zone></small>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="container mission-layout">
+        <div class="mission-main">
+            <article class="card detail-card">
+                <p class="eyebrow">Миссия</p>
+                <h2>Описание</h2>
+                <p>{{ event.mission_description }}</p>
+            </article>
+
+            <article class="card detail-card">
+                <p class="eyebrow">Слоттинг</p>
+                <h2>Отделения миссии</h2>
+                {% if slot_departments %}
+                    <div class="slotting-table">
+                        <div class="slotting-head">
+                            <span>Отделение</span>
+                            <span>Слотов</span>
+                            <span>Занято</span>
+                        </div>
+                        {% for row in slot_departments %}
+                            <section class="slotting-row">
+                                <div class="slotting-summary">
+                                    <strong>{{ row.department.name }}</strong>
+                                    <span>{{ row.total_slots }}</span>
+                                    <span>{{ row.occupied_slots }}</span>
+                                </div>
+                                <div class="slot-chip-list">
+                                    {% for slot in row.slots %}
+                                        <div class="slot-chip {% if slot.assignment %}is-occupied{% endif %}">
+                                            <span>#{{ slot.number }}</span>
+                                            {% if slot.assignment %}
+                                                <strong>{{ slot.assignment.squad.name }}</strong>
+                                            {% else %}
+                                                <em>Свободно</em>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">Отделения для миссии пока не настроены.</p>
+                {% endif %}
+            </article>
+
+            <article class="card detail-card">
+                <p class="eyebrow">Одиночные игроки</p>
+                <h2>Регистрации</h2>
+                {% if solo_registrations %}
+                    <div class="slot-list">
+                        {% for registration in solo_registrations %}
+                            <div class="slot-row">
+                                <div>
+                                    <strong>{{ registration.player_name }}</strong>
+                                </div>
+                                <div class="slot-count">{{ registration.created_at|date:"d.m.Y" }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">Одиночных регистраций пока нет.</p>
+                {% endif %}
+            </article>
+        </div>
+
+        <aside class="mission-side">
+            <article class="card detail-card">
+                <p class="eyebrow">Сервер</p>
+                <h2>{{ event.server_name }}</h2>
+                <dl class="detail-list compact-detail-list">
+                    <div>
+                        <dt>IP</dt>
+                        <dd>{{ event.server_ip }}</dd>
+                    </div>
+                    <div>
+                        <dt>Порт</dt>
+                        <dd>{{ event.server_port }}</dd>
+                    </div>
+                    <div>
+                        <dt>Адрес</dt>
+                        <dd>{{ event.server_address }}</dd>
+                    </div>
+                </dl>
+            </article>
+
+            <article class="card detail-card password-card">
+                <p class="eyebrow">Доступ</p>
+                <h2>Пароль сервера</h2>
+                {% if can_view_event_password %}
+                    <div class="password-value">{{ event.server_password }}</div>
+                    <p class="muted">Пароль доступен вашему типу участия.</p>
+                {% elif event.server_password %}
+                    <div class="password-value is-hidden">Скрыт</div>
+                    <p class="muted">Пароль будет открыт администрацией для вашего типа участия.</p>
+                {% else %}
+                    <div class="password-value is-hidden">Не указан</div>
+                    <p class="muted">Администратор ещё не добавил пароль к событию.</p>
+                {% endif %}
+            </article>
+
+            <article class="card detail-card">
+                <p class="eyebrow">Участие</p>
+                <h2>Запись</h2>
+                <div class="event-actions">
+                    {% if user_solo_registration %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="cancel_solo_registration">
+                            <button class="btn btn-outline" type="submit">Отменить запись</button>
+                        </form>
+                    {% elif event.solo_registration_open %}
+                        <button class="btn btn-primary" type="button" data-modal-open="solo-registration-modal">Я одиночный игрок</button>
+                    {% else %}
+                        <button class="btn btn-outline is-disabled" type="button" disabled>Одиночная запись закрыта</button>
+                    {% endif %}
+
+                    {% if event.squad_slotting_open or managed_slot_assignments %}
+                        <button class="btn btn-outline" type="button" data-modal-open="squad-slot-modal">Слоты для отрядов</button>
+                    {% else %}
+                        <button class="btn btn-outline is-disabled" type="button" disabled>Слоты для отрядов закрыты</button>
+                    {% endif %}
+                </div>
+            </article>
+        </aside>
+    </div>
+</section>
+
+<div class="modal {% if open_modal == 'solo-registration-modal' %}is-open{% endif %}" id="solo-registration-modal" aria-hidden="{% if open_modal == 'solo-registration-modal' %}false{% else %}true{% endif %}">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="solo-registration-title">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">Одиночный игрок</p>
+                <h2 id="solo-registration-title">Регистрация на миссию</h2>
+            </div>
+            <button class="modal-close" type="button" aria-label="Закрыть окно" data-modal-close>&times;</button>
+        </div>
+        {% if user_solo_registration %}
+            <div class="managed-slot-list">
+                <div class="managed-slot-row">
+                    <div>
+                        <strong>Ваша запись активна</strong>
+                        <span>{{ user_solo_registration.player_name }}</span>
+                    </div>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="cancel_solo_registration">
+                        <button class="slot-cancel-button" type="submit">Отменить запись</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <p class="modal-copy">Запись будет создана по данным вашего профиля. Доступно только подтвержденным пользователям.</p>
+            {% if request.user.is_authenticated %}
+                <div class="managed-slot-list">
+                    <div class="managed-slot-row">
+                        <div>
+                            <strong>{{ request.user.username }}</strong>
+                            <span>
+                                {% if request.user.profile %}
+                                    Discord: {{ request.user.profile.discord_username }}
+                                {% else %}
+                                    Профиль игрока не найден
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            {% if event.solo_registration_open %}
+                <form class="modal-form" method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="solo_registration">
+                    <button class="btn btn-primary" type="submit">Записаться на событие</button>
+                </form>
+            {% else %}
+                <p class="muted">Запись одиночных игроков пока закрыта администрацией.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal {% if open_modal == 'squad-slot-modal' %}is-open{% endif %}" id="squad-slot-modal" aria-hidden="{% if open_modal == 'squad-slot-modal' %}false{% else %}true{% endif %}">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="squad-slot-title">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">Слоттинг</p>
+                <h2 id="squad-slot-title">Слоты для отрядов</h2>
+            </div>
+            <button class="modal-close" type="button" aria-label="Закрыть окно" data-modal-close>&times;</button>
+        </div>
+        {% if manageable_squads %}
+            <p class="modal-copy">Слоты будут закреплены за отрядом «{{ slot_squad.name }}». Выберите свободные слоты внутри отделений миссии.</p>
+            {% if managed_slot_assignments %}
+                <div class="managed-slot-list">
+                    <h3>Слоты вашего отряда</h3>
+                    {% for assignment in managed_slot_assignments %}
+                        <div class="managed-slot-row">
+                            <div>
+                                <strong>{{ assignment.department.name }} #{{ assignment.slot_number }}</strong>
+                                <span>{{ assignment.squad.name }}</span>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="cancel_squad_slot">
+                                <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                <button class="slot-cancel-button" type="submit">Отменить</button>
+                            </form>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% if event.squad_slotting_open %}
+                <form class="modal-form" method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="squad_slot">
+                    {% for field in squad_slot_form %}
+                        {% if field.name == 'slots' %}
+                            <div class="form-group">
+                                <label>{{ field.label }}</label>
+                                <div class="slot-picker" data-slot-picker>
+                                    {% for row in slot_departments %}
+                                        <section class="slotting-row slot-picker-section">
+                                            <div class="slotting-summary">
+                                                <strong>{{ row.department.name }}</strong>
+                                                <span>{{ row.total_slots }}</span>
+                                                <span>{{ row.occupied_slots }}</span>
+                                            </div>
+                                            <div class="slot-chip-list">
+                                                {% for slot in row.slots %}
+                                                    {% if slot.assignment %}
+                                                        <div class="slot-chip is-occupied">
+                                                            <span>#{{ slot.number }}</span>
+                                                            <strong>{{ slot.assignment.squad.name }}</strong>
+                                                        </div>
+                                                    {% else %}
+                                                        <label class="slot-chip slot-pick-chip" role="button" tabindex="0" aria-pressed="false">
+                                                            <input type="checkbox" name="{{ field.html_name }}" value="{{ row.department.id }}:{{ slot.number }}">
+                                                            <span>#{{ slot.number }}</span>
+                                                            <em data-slot-label>
+                                                                <span class="slot-free-text">Выбрать</span>
+                                                                <span class="slot-selected-text">Выбран</span>
+                                                            </em>
+                                                        </label>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </section>
+                                    {% endfor %}
+                                </div>
+                                {% for error in field.errors %}
+                                    <p class="field-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <p class="field-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% if squad_slot_form.non_field_errors %}
+                        <div class="form-errors">{{ squad_slot_form.non_field_errors }}</div>
+                    {% endif %}
+                    <button class="btn btn-primary" type="submit">Занять слот</button>
+                </form>
+            {% else %}
+                <p class="muted">Слоттинг отрядов пока закрыт администрацией.</p>
+            {% endif %}
+        {% else %}
+            <p class="modal-copy">У вас нет отряда, где вы командир или зам. командира.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — Вход{% endblock %}
+
+{% block content %}
+<section class="section auth-section">
+    <div class="container auth-container">
+        <div class="auth-copy">
+            <p class="eyebrow">Аккаунт проекта</p>
+            <h1>Вход</h1>
+            <p class="lead">Войдите, чтобы видеть своё имя в навигации и работать с возможностями сообщества.</p>
+        </div>
+        <form class="form-card auth-card" method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <p class="field-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <button class="btn btn-primary" type="submit">Войти</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

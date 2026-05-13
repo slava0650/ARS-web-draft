@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — Главная{% endblock %}
+
+{% block content %}
+<section class="hero section">
+    <div class="container hero-grid">
+        <div class="hero-content">
+            <p class="eyebrow">Arma Reforger tactical community</p>
+            <h1>ARMA-RUSSIAN</h1>
+            <p class="hero-subtitle">Тактический проект по Arma Reforger с организованными отрядами, событиями и активными серверами.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="{% url 'squads' %}">Присоединиться</a>
+                <a class="btn btn-outline" href="{% url 'events' %}">Посмотреть расписание</a>
+            </div>
+        </div>
+        <div class="hero-panel" aria-label="Статус проекта">
+            <div class="panel-line">
+                <span>Статус</span>
+                <strong>Online</strong>
+            </div>
+            <div class="panel-line">
+                <span>Формат</span>
+                <strong>PvP / COOP</strong>
+            </div>
+            <div class="panel-line">
+                <span>События</span>
+                <strong>Еженедельно</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-muted servers-section">
+    <div class="container">
+        <div class="section-heading split-heading">
+            <div>
+                <p class="eyebrow">Инфраструктура</p>
+                <h2>Серверы проекта</h2>
+            </div>
+            <p class="section-note">Активные площадки ARMA-RUSSIAN для миссий, тренировок, событий и резервных игровых сессий.</p>
+        </div>
+        <div class="server-grid">
+            {% for server in servers %}
+                <article class="server-card card">
+                    <div class="card-topline">
+                        <span class="status-dot" aria-label="Сервер активен"></span>
+                        <span>Работает</span>
+                    </div>
+                    <h3>{{ server.name }}</h3>
+                    <dl class="server-meta">
+                        <div>
+                            <dt>IP</dt>
+                            <dd>{{ server.ip }}</dd>
+                        </div>
+                        <div>
+                            <dt>Онлайн</dt>
+                            <dd>{{ server.online }}</dd>
+                        </div>
+                    </dl>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section about-section">
+    <div class="container about-layout">
+        <div>
+            <p class="eyebrow">Сообщество</p>
+            <h2>О проекте</h2>
+        </div>
+        <p class="lead">ARMA-RUSSIAN — это игровое сообщество для игроков Arma Reforger, где проходят регулярные события, командные миссии и тактические операции. Проект объединяет отряды, одиночных игроков и организаторов событий в одной понятной системе.</p>
+    </div>
+</section>
+{% endblock %}

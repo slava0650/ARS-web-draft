@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — {{ squad.name }}{% endblock %}
+
+{% block content %}
+<section class="section page-hero">
+    <div class="container squad-detail-hero">
+        <div>
+            <a class="back-link" href="{% url 'squads' %}">
+                <span aria-hidden="true">←</span>
+                Все отряды
+            </a>
+            <h1>{{ squad.name }}</h1>
+            <p class="lead">{{ squad.description }}</p>
+            {% if can_manage %}
+                <a class="btn btn-outline" href="{% url 'squad_manage' squad.slug %}">Управление отрядом</a>
+            {% endif %}
+        </div>
+        <div class="squad-status-panel">
+            <span class="badge {% if squad.recruitment_status == 'closed' %}badge-muted{% endif %}">{{ squad.status_label }}</span>
+            <div class="metric">
+                <span>Игроков</span>
+                <strong>{{ squad.players_count }}</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="container squad-detail-layout">
+        <article class="card detail-card">
+            <p class="eyebrow">Информация</p>
+            <h2>Об отряде</h2>
+            <p>{{ squad.description }}</p>
+            <dl class="detail-list">
+                <div>
+                    <dt>Командир</dt>
+                    <dd>{{ squad.commander }}</dd>
+                </div>
+                <div>
+                    <dt>Специализация</dt>
+                    <dd>{{ squad.specialization }}</dd>
+                </div>
+                <div>
+                    <dt>Связь</dt>
+                    <dd>{{ squad.communication }}</dd>
+                </div>
+                <div>
+                    <dt>Расписание</dt>
+                    <dd>{{ squad.schedule }}</dd>
+                </div>
+            </dl>
+        </article>
+
+        <aside class="card detail-card">
+            <p class="eyebrow">Вступление</p>
+            <h2>Требования</h2>
+            <ul class="requirement-list">
+                {% for requirement in squad.requirements_list %}
+                    <li>{{ requirement }}</li>
+                {% endfor %}
+            </ul>
+            <button class="btn btn-primary" type="button" data-modal-open="join-squad-modal">Подать заявку</button>
+        </aside>
+    </div>
+</section>
+
+<div class="modal {% if is_join_modal_open %}is-open{% endif %}" id="join-squad-modal" aria-hidden="{% if is_join_modal_open %}false{% else %}true{% endif %}">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="join-squad-modal-title">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">Вступление в отряд</p>
+                <h2 id="join-squad-modal-title">Заявка в «{{ squad.name }}»</h2>
+            </div>
+            <button class="modal-close" type="button" aria-label="Закрыть окно" data-modal-close>&times;</button>
+        </div>
+        <p class="modal-copy">Заполните данные для связи. Командир отряда сможет рассмотреть заявку и ответить вам вне сайта.</p>
+        <form class="modal-form" method="post" novalidate>
+            {% csrf_token %}
+            {% for field in join_form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="help-text">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="field-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            {% if join_form.non_field_errors %}
+                <div class="form-errors">{{ join_form.non_field_errors }}</div>
+            {% endif %}
+            <button class="btn btn-primary" type="submit">Отправить заявку</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

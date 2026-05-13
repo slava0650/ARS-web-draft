@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — Правила{% endblock %}
+
+{% block content %}
+<section class="section page-hero">
+    <div class="container narrow">
+        <h1>Правила проекта</h1>
+        <p class="lead">Основные правила поведения на серверах и событиях ARMA-RUSSIAN.</p>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="container rules-grid">
+        {% for section in rule_sections %}
+            <article class="rule-section card">
+                <h2>{{ section.title }}</h2>
+                <ul>
+                    {% for rule in section.rules %}
+                        <li>{{ rule }}</li>
+                    {% endfor %}
+                </ul>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

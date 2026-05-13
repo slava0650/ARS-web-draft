@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — Расписание событий{% endblock %}
+
+{% block content %}
+<section class="section page-hero">
+    <div class="container narrow">
+        <h1>Расписание событий</h1>
+        <p class="lead">Список ближайших игровых событий, миссий и тренировок проекта.</p>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="container event-list">
+        {% for event in events %}
+            <a class="event-card card event-link-card" href="{% url 'event_detail' event.slug %}">
+                <div class="event-date" data-event-time="{{ event.starts_at_unix|default:'' }}">
+                    <strong data-event-date>{{ event.date_label }}</strong>
+                    <span data-event-clock>{{ event.time_label }}</span>
+                </div>
+                <div class="event-body">
+                    <span class="badge">{{ event.event_type }}</span>
+                    <h2>{{ event.title }}</h2>
+                    <p>{{ event.short_description }}</p>
+                    <span class="card-action">Открыть миссию</span>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

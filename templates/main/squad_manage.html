@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — Управление {{ squad.name }}{% endblock %}
+
+{% block content %}
+<section class="section page-hero">
+    <div class="container page-hero-grid">
+        <div>
+            <a class="back-link" href="{% url 'squad_detail' squad.slug %}">
+                <span aria-hidden="true">←</span>
+                Страница отряда
+            </a>
+            <h1>Управление отрядом</h1>
+            <p class="lead">{{ squad.name }} — заявки, участники и данные подразделения.</p>
+        </div>
+        <div class="squad-status-panel">
+            <span class="badge">{{ membership.get_role_display }}</span>
+            <div class="metric">
+                <span>Заявок</span>
+                <strong>{{ pending_applications|length }}</strong>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="container management-grid">
+        <div class="management-main">
+            <article class="card manage-card">
+                <div class="management-heading">
+                    <div>
+                        <p class="eyebrow">Заявки</p>
+                        <h2>На рассмотрении</h2>
+                    </div>
+                </div>
+
+                {% if pending_applications %}
+                    <div class="application-list">
+                        {% for application in pending_applications %}
+                            <article class="application-item">
+                                <div>
+                                    <h3>{{ application.player_name }}</h3>
+                                    <p>{{ application.message }}</p>
+                                    <dl class="compact-meta">
+                                        <div>
+                                            <dt>Контакт</dt>
+                                            <dd>{{ application.contact }}</dd>
+                                        </div>
+                                        <div>
+                                            <dt>Возраст</dt>
+                                            <dd>{{ application.age }}</dd>
+                                        </div>
+                                        <div>
+                                            <dt>Опыт</dt>
+                                            <dd>{{ application.experience }}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                                <div class="application-actions">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="accept_application">
+                                        <input type="hidden" name="application_id" value="{{ application.id }}">
+                                        <button class="btn btn-primary btn-small" type="submit">Принять</button>
+                                    </form>
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="reject_application">
+                                        <input type="hidden" name="application_id" value="{{ application.id }}">
+                                        <button class="btn btn-outline btn-small" type="submit">Отклонить</button>
+                                    </form>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">Новых заявок пока нет.</p>
+                {% endif %}
+            </article>
+
+            <article class="card manage-card">
+                <p class="eyebrow">Состав</p>
+                <h2>Участники и роли</h2>
+                <div class="member-list">
+                    {% for member in members %}
+                        <div class="member-row">
+                            <div>
+                                <strong>{{ member.display_name }}</strong>
+                                <span>{{ member.contact|default:"Контакт не указан" }}</span>
+                            </div>
+                            {% if can_edit %}
+                                <form class="role-form" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_member_role">
+                                    <input type="hidden" name="member_id" value="{{ member.id }}">
+                                    <select class="form-control" name="role">
+                                        {% for value, label in role_choices %}
+                                            <option value="{{ value }}" {% if member.role == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-outline btn-small" type="submit">Сохранить</button>
+                                </form>
+                            {% else %}
+                                <span class="badge badge-muted">{{ member.get_role_display }}</span>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p class="muted">Состав пока пуст.</p>
+                    {% endfor %}
+                </div>
+            </article>
+        </div>
+
+        <aside class="management-side">
+            <article class="card manage-card">
+                <p class="eyebrow">Данные отряда</p>
+                <h2>Редактирование</h2>
+                {% if can_edit %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_squad">
+                        {% for field in edit_form %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <p class="field-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button class="btn btn-primary" type="submit">Сохранить отряд</button>
+                    </form>
+                {% else %}
+                    <p class="muted">Зам. командира может рассматривать заявки, но не изменять информацию отряда и роли участников.</p>
+                {% endif %}
+            </article>
+
+            <article class="card manage-card">
+                <p class="eyebrow">История</p>
+                <h2>Последние решения</h2>
+                {% if reviewed_applications %}
+                    <div class="reviewed-list">
+                        {% for application in reviewed_applications %}
+                            <div>
+                                <strong>{{ application.player_name }}</strong>
+                                <span>{{ application.get_status_display }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="muted">Рассмотренных заявок пока нет.</p>
+                {% endif %}
+            </article>
+        </aside>
+    </div>
+</section>
+{% endblock %}

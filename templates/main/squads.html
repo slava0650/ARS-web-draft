@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN — Отряды{% endblock %}
+
+{% block content %}
+<section class="section page-hero">
+    <div class="container page-hero-grid">
+        <div>
+            <h1>Отряды проекта</h1>
+            <p class="lead">Здесь собраны игровые отряды, участвующие в жизни проекта ARMA-RUSSIAN. Игроки могут выбрать отряд или подать заявку на регистрацию своего подразделения.</p>
+        </div>
+        <div class="squad-cta">
+            <p class="eyebrow">Новый состав</p>
+            <h2>Своё подразделение?</h2>
+            <p>Подайте заявку, и администрация свяжется с командиром.</p>
+            <button class="btn btn-primary" type="button" data-modal-open="squad-modal">Зарегистрировать отряд</button>
+        </div>
+    </div>
+</section>
+
+<section class="section section-tight">
+    <div class="container">
+        <div class="card-grid">
+            {% for squad in squads %}
+                <a class="card squad-card squad-link-card" href="{% url 'squad_detail' squad.slug %}">
+                    <div class="squad-header">
+                        <h2>{{ squad.name }}</h2>
+                        <span class="badge {% if squad.recruitment_status == 'closed' %}badge-muted{% endif %}">{{ squad.status_label }}</span>
+                    </div>
+                    <p>{{ squad.description }}</p>
+                    <div class="metric">
+                        <span>Игроков</span>
+                        <strong>{{ squad.players_count }}</strong>
+                    </div>
+                    <span class="card-action">Открыть информацию</span>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<div class="modal {% if is_modal_open %}is-open{% endif %}" id="squad-modal" aria-hidden="{% if is_modal_open %}false{% else %}true{% endif %}">
+    <div class="modal-backdrop" data-modal-close></div>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="squad-modal-title">
+        <div class="modal-header">
+            <div>
+                <p class="eyebrow">Заявка на отряд</p>
+                <h2 id="squad-modal-title">Зарегистрировать отряд</h2>
+            </div>
+            <button class="modal-close" type="button" aria-label="Закрыть окно" data-modal-close>&times;</button>
+        </div>
+        <p class="modal-copy">Заполните данные подразделения. После отправки заявка появится в панели администратора.</p>
+        <form class="modal-form" method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="help-text">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="field-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+            <button class="btn btn-primary" type="submit">Отправить заявку</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

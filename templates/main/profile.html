@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}ARMA-RUSSIAN - Профиль{% endblock %}
+
+{% block content %}
+<section class="section profile-section">
+    <div class="container profile-shell">
+        <div class="profile-heading">
+            <div>
+                <p class="eyebrow">Личный кабинет</p>
+                <h1>Профиль игрока</h1>
+                <p class="lead">Данные аккаунта, подтверждение, игровые идентификаторы и роли в отрядах ARMA-RUSSIAN.</p>
+            </div>
+            <form class="profile-logout" method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="btn btn-outline" type="submit">Выйти из аккаунта</button>
+            </form>
+        </div>
+
+        <div class="profile-dashboard">
+            <article class="profile-card profile-overview">
+                <div class="profile-header">
+                    <div class="profile-avatar" aria-hidden="true">{{ user.username|first|upper }}</div>
+                    <div class="profile-identity">
+                        <span class="profile-kicker">Участник сообщества</span>
+                        <h2>{{ user.username }}</h2>
+                        {% if profile_data and profile_data.is_approved %}
+                            <span class="profile-status is-approved">Подтверждён</span>
+                        {% elif profile_data %}
+                            <span class="profile-status is-pending">Ожидает подтверждения</span>
+                        {% else %}
+                            <span class="profile-status">Активен</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="profile-summary-grid">
+                    <div>
+                        <span>Дата регистрации</span>
+                        <strong>{{ user.date_joined|date:"d.m.Y" }}</strong>
+                    </div>
+                    <div>
+                        <span>Отрядов</span>
+                        <strong>{{ memberships|length }}</strong>
+                    </div>
+                    <div>
+                        <span>Доступ</span>
+                        <strong>
+                            {% if profile_data and profile_data.is_approved %}
+                                Открыт
+                            {% elif profile_data %}
+                                На проверке
+                            {% else %}
+                                Базовый
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </article>
+
+            <article class="profile-card profile-details-card">
+                <div class="card-heading-row">
+                    <div>
+                        <p class="eyebrow">Идентификаторы</p>
+                        <h2>Игровые данные</h2>
+                    </div>
+                </div>
+
+                <dl class="profile-detail-grid">
+                    <div>
+                        <dt>Имя пользователя</dt>
+                        <dd>{{ user.username }}</dd>
+                    </div>
+                    {% if profile_data %}
+                        <div>
+                            <dt>SteamID64</dt>
+                            <dd>{{ profile_data.steamid64 }}</dd>
+                        </div>
+                        <div>
+                            <dt>Arma ID</dt>
+                            <dd>{{ profile_data.arma_id }}</dd>
+                        </div>
+                        <div>
+                            <dt>Discord</dt>
+                            <dd>{{ profile_data.discord_username }}</dd>
+                        </div>
+                        {% if profile_data.is_approved and profile_data.approved_at %}
+                            <div>
+                                <dt>Подтверждён</dt>
+                                <dd>{{ profile_data.approved_at|date:"d.m.Y" }}</dd>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div>
+                            <dt>Профиль игрока</dt>
+                            <dd>Не создан</dd>
+                        </div>
+                    {% endif %}
+                </dl>
+            </article>
+        </div>
+
+        <article class="profile-card profile-squads">
+            <div class="card-heading-row">
+                <div>
+                    <p class="eyebrow">Отряды</p>
+                    <h2>Мои роли</h2>
+                </div>
+            </div>
+
+            {% if memberships %}
+                <div class="profile-squad-list">
+                    {% for membership in memberships %}
+                        <div class="profile-squad-row">
+                            <div>
+                                <strong>{{ membership.squad.name }}</strong>
+                                <span>{{ membership.get_role_display }}</span>
+                            </div>
+                            {% if membership.can_review_applications %}
+                                <a class="btn btn-outline btn-small" href="{% url 'squad_manage' membership.squad.slug %}">Управлять</a>
+                            {% else %}
+                                <a class="btn btn-outline btn-small" href="{% url 'squad_detail' membership.squad.slug %}">Открыть</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="muted">Вы пока не состоите в отряде.</p>
+            {% endif %}
+        </article>
+    </div>
+</section>
+{% endblock %}
